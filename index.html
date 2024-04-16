@@ -1,0 +1,288 @@
+<!-- Inicio de la Sección 1 -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta http-equiv= "Content-Type"content= "text/html; charset=UTF-8" />
+        <style type="text/css"> html { height: 100% } body { height: 100%; margin: 0; padding: 0 } #map_canvas { height: 100% } </style>
+        <!--
+        <link rel="shortcut icon" type="image/x-icon" href="https://static.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico" />
+        <link rel="mask-icon" type="" href="https://static.codepen.io/assets/favicon/logo-pin-8f3771b1072e3c38bd662872f6b673a722f4b3ca2421637d5596661b4e2132cc.svg" color="#111" /> 
+        -->
+        
+        <link rel=stylesheet type="text/css" href="https://mibarram.github.io/mapas.github.io/Preloader.css">
+        
+        <style>
+            *{ margin: 0; padding: 0; }
+            html, body, #map_canvas{
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+
+        <link rel="stylesheet" href="https://mibarram.github.io/mapas.github.io/infoBox.css">
+        <link rel="stylesheet" type="text/css" href="https://mibarram.github.io/mapas.github.io/showHideButton.css" />
+        
+        <script>window.console = window.console || function(t) {};</script>
+        <script>
+            if (document.location.search.match(/type=embed/gi)) {
+                window.parent.postMessage("resize", "*");
+            }
+        </script>
+
+        <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=weekly&key=AIzaSyB4-0huw7PrxZJ8kCrGHkzz4SWZKOiDlX0"> </script>
+
+        <script type="text/javascript">
+            var watchID;
+            var geoLoc;
+            lat = 1;
+            lon = 1; 
+            latLon = new google.maps.LatLng ( 1, 1 );
+
+            function initialize() {
+
+                function successCallback (position) {
+                    lat = position.coords.latitude;
+                    lon = position.coords.longitude; 
+                    latLon = new google.maps.LatLng ( lat, lon );
+                    gMarker.setPosition(latLon);
+                };
+
+                const errorCallback = (error) => {
+                    console.log(error);
+                };
+
+                var options = {timeout:60000};
+
+                navigator.geolocation.watchPosition(successCallback, errorCallback, options);
+
+                var centroPoligono = {lat: 20.5817318733, lng: -103.5183564375};
+                var namePoligono = '';
+                var nameDF = '';
+                var nameDL = '';
+
+                var myOptions = {
+                    center: {lat: 20.60094827532778, lng: -103.55516928321099}, zoom: 12, mapTypeId: google.maps.MapTypeId.ROADMAP, zoomControl: true, scaleControl: true
+                };
+                
+                google.maps.event.addDomListener(window, 'load', initialize); 
+ 
+                // simularClick
+                function sC() {
+                    var a = document.createElement('a');
+                    a.href = 'analytics:///' + document.getElementById('contenedorV7').innerHTML;
+                    a.click();
+                    document.body.removeChild('a');
+                }
+
+                // Definimos la variable que controla el objeto mapa
+                var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+                // Botón para ver/ocultar leyenda de la capa principal
+                const difLabelButton = document.createElement("button");
+
+                difLabelButton.textContent = "Dist. Fed. Nombre";
+                difLabelButton.classList.add("custom-map-control-button");
+                map.controls[google.maps.ControlPosition.LEFT_TOP].push(difLabelButton);
+                difLabelButton.addEventListener("click", () => {
+                    hideLabelsEnt();
+                });
+
+                // Botón para ver/ocultar capa de secciones
+                const secsLayerButton = document.createElement("button");
+
+                secsLayerButton.textContent = "Secciones";
+                secsLayerButton.classList.add("custom-map-control-button");
+                map.controls[google.maps.ControlPosition.TOP_CENTER].push(secsLayerButton);
+                secsLayerButton.addEventListener("click", () => {
+                    hideLayerSec();
+                });
+
+                // Botón para ver/ocultar leyendas de capa de secciones
+                const secsLabelButton = document.createElement("button");
+
+                secsLabelButton.textContent = "Secciones Nombre";
+                secsLabelButton.classList.add("custom-map-control-button");
+                map.controls[google.maps.ControlPosition.LEFT_TOP].push(secsLabelButton);
+                secsLabelButton.addEventListener("click", () => {
+                    hideLabelsSec();
+                });
+
+                //centroubicacion = navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+                //alert(centroubicacion);
+
+                // Definimos la variable para ajustar la vista del polígono al auto zoom
+                var bounds = new google.maps.LatLngBounds();
+
+                // <!-- Fin de la Sección 1 -->
+                
+                const gMarker = new google.maps.Marker({
+                    position: { lat: 1, lng: 1},
+                    map: map,
+                });
+                
+                //entPol = Entidad (EST, DIF, DIL, MUN, PAI, CIR) Pol indica que es el polígono de la entidad principal llamada sin divisiones de subelementos
+                var entPol = new google.maps.Data();
+                entPol.loadGeoJson("https://mibarram.github.io/mapas.github.io/001_001_014_DIF_012.geojson",) ; //Carga del polígono principal
+
+                //entSec = Entidad (EST, DIF, DIL, MUN, PAI, CIR) dividida por el ambito de las últimas 3 letras
+                var entSec = new google.maps.Data();
+                entSec.loadGeoJson("https://mibarram.github.io/mapas.github.io/D12JALSECCS.geojson",) ; //Carga de DIFSEC Distrito por Secciones
+
+                entPol.setMap(map); //Seteamos polígono principal
+                entSec.setMap(null); //Seteamos poligono dividido por el ámbito definido, por defecto al noser la principal se apaga de inicio
+
+                entPol.setStyle({ fillColor: '#922B21', fillOpacity: 0.2, strokeColor: '#922B21', strokeWeight: '3', visible: true, zindex: 0 }); // Estilo polígono principal
+                entSec.setStyle({ fillColor: '#13AC21', fillOpacity: 0.1, strokeColor: '#0C6914', strokeWeight: '3', visible: true }); // Estilo para secciones
+
+                // Entidad principal, para poner la etiqueta de centro de poligono
+                var mkr_EntCen = [];
+                var entCen = new google.maps.Data();
+                eLatLng = new google.maps.LatLng();
+
+                //entCen = Centros de poligono principal
+                //mkr_EntCen = marcador del centro de poligono principal
+                entCen.loadGeoJson("https://mibarram.github.io/mapas.github.io/001_001_014_DIF_012C.geojson", {},
+                    function(features) {
+                        i = 0;
+                        entCen.forEach(function(feature){
+                            i = i + 1;
+                            eLatLng = feature.getGeometry().get();
+                            eName = feature.getProperty('DISTRITO');
+
+                            mkr_EntCen[i] = new google.maps.Marker({
+                                position: eLatLng,
+                                label: {
+                                    text: 'DIST. ' + eName + ' FED.',
+                                    color: '#922B21',
+                                    fontSize: '30px',
+                                    fontWeight: 'bold' 
+                                },
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    scale: 0
+                                }, 
+                                map: map,
+                            });  
+                        }); 
+                    }
+                );
+
+                // Entidad por secciones, para poner las etiquetas de centro de poligonos
+                var mkr_EntSecCen = [];
+                var entSecCen = new google.maps.Data();
+                // eLatLng = new google.maps.LatLng();
+
+                //entSecCen = Centros de cada sección
+                //entSecCen.loadGeoJson("https://mibarram.github.io/mapas.github.io/SECCION_CENTROS_JAL.geojson");
+                //mkrEntSecCen = marcador del centro de cada sección
+                entSecCen.loadGeoJson("https://mibarram.github.io/mapas.github.io/D12JALSECCS_CENTROS.geojson", {},
+                    function(features) {
+                        i = 0;
+                        entSecCen.forEach(function(feature){
+                            i = i + 1;
+                            eLatLng = feature.getGeometry().get();
+                            eName = feature.getProperty('SECCION');
+
+                            mkr_EntSecCen[i] = new google.maps.Marker({
+                                position: eLatLng,
+                                label: {
+                                    text: "" + eName + "",
+                                    color: '#0C6914',
+                                    fontSize: '18px',
+                                    fontWeight: '500' 
+                                },
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    scale: 0
+                                }, 
+                                map: map,
+                            });
+                            mkr_EntSecCen[i].setVisible(false);
+                        }); 
+                    }
+                );
+                
+                // Ver/ocultar etiquetas de capa principal
+                function hideLabelsEnt() {
+                    if (entPol.getMap() == null) 
+                        alert("Active la capa principal para utilizar esta opción")
+                    else {
+                        i = 0;
+                        entCen.forEach(function(feature){
+                            i = i + 1;
+                            if (mkr_EntCen[i].getVisible() != false) mkr_EntCen[i].setVisible(false);
+                            else mkr_EntCen[i].setVisible(true);
+                        });
+                    };
+                };
+
+                // Ver/ocultar etiquetas de capa de secciones
+                function hideLabelsSec() {
+                    if (entSec.getMap() == null) 
+                        alert("Active la capa de Secciones para utilizar esta opción")
+                    else {
+                        i = 0;
+                        entSecCen.forEach(function(feature){
+                            i = i + 1;
+                            if (mkr_EntSecCen[i].getVisible() != false) mkr_EntSecCen[i].setVisible(false);
+                            else mkr_EntSecCen[i].setVisible(true);
+                        });
+                    };
+                };
+                
+                // Ver/ocultar capa de secciones
+                function hideLayerSec() {
+                    if (entSec.getMap() != null) {
+                        entPol.setMap(map);
+                        mkr_EntCen[1].setVisible(true);
+                        entSec.setMap(null);
+                        i = 0;
+                        entSecCen.forEach(function(feature){
+                            i = i + 1;
+                            mkr_EntSecCen[i].setVisible(false);
+                        }); 
+                    }
+                    else {
+                        entPol.setMap(null);
+                        mkr_EntCen[1].setVisible(false);
+                        entSec.setMap(map);
+                        i = 0;
+                        entSecCen.forEach(function(feature){
+                            i = i + 1;
+                            mkr_EntSecCen[i].setVisible(true);
+                        });
+                    }
+                };
+
+                entSec.addListener('mouseover', function(event) {
+                    entSec.overrideStyle(event.feature, {fillColor: 'orange', strokeWeight: 5});
+                    namePoligono = event.feature.getProperty("SECCION");
+                    nameDF = event.feature.getProperty("DISTRITO");
+                    nameDL = event.feature.getProperty("DISTRITO_L");
+                    document.getElementById("infoBox").innerText = "Sección: " + namePoligono + "\nD. Fed.: " + nameDF + "\nD. Loc:" + nameDL;
+                });
+
+                entSec.addListener('mouseout', function(event) {
+                    entSec.revertStyle();
+                    document.getElementById("infoBox").innerText = "";
+                });
+
+                entSec.addListener('click', function(event) {
+                    document.getElementById('contenedorV7').innerHTML= '{"Ambito":"'+ 5 + '","IdEntidad":"'+ namePoligono +'"}';
+                });
+            }
+
+        </script>
+    </head>
+
+    <body onload="initialize()">
+        <div class="loader">Procesando...</div>
+        <div id="map_canvas" style="width:100%; height:100%">
+        </div>
+        <div id="infoBox"></div>
+        <div style="display:none;" id="contenedorV7"></div>
+    </body>
+</html>
+
+<!-- Fín de la Sección 4 -->
